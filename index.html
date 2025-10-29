@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mi Lista de Tareas — Vaina Loca</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; color: #e7e7ea; background: #0a0b10; overflow-x: hidden; }
+
+    :root {
+      --bg-0: #080a12;
+      --bg-1: #0d1020;
+      --card: rgba(255,255,255,.06);
+      --card-2: rgba(255,255,255,.12);
+      --border: rgba(255,255,255,.18);
+      --text: #e9ecf1;
+      --muted: #aeb6c7;
+      --accent: #7c3aed; 
+      --accent-2: #22d3ee;
+      --glow: 0 0 24px rgba(124,58,237,.35), 0 0 48px rgba(34,211,238,.25);
+    }
+
+    .bg {
+      position: fixed; inset: 0; z-index: -2; pointer-events: none;
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(124,58,237,.20), transparent 60%),
+        radial-gradient(900px 500px at 10% 110%, rgba(34,211,238,.18), transparent 60%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-0));
+    }
+    .grid { 
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 1px, transparent 1px 60px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 60px);
+      transform: perspective(900px) rotateX(55deg) translateY(10%);
+      filter: blur(1px) opacity(.45);
+      animation: drift 18s linear infinite;
+    }
+    @keyframes drift { to { transform: perspective(900px) rotateX(55deg) translateY(15%); } }
+
+    .wrap {
+      max-width: 840px; margin: min(10vh,5rem) auto 8vh; padding: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid var(--border);
+      border-radius: 20px; backdrop-filter: blur(14px) saturate(140%);
+      box-shadow: 0 10px 40px rgba(0,0,0,.4), var(--glow);
+    }
+
+    header { display: grid; gap: 6px; margin-bottom: 18px; }
+    .title {
+      font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: .5px; line-height: 1.05;
+      background: linear-gradient(92deg, #fff, #c0a7ff 35%, #9aeaff 75%, #fff);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 8px 24px rgba(124,58,237,.24));
+      position: relative; display: inline-block;
+    }
+    .title::after { 
+      content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
+      filter: blur(.6px) saturate(1.4);
+    }
+    .subtitle { color: var(--muted); font-size: 14px; }
+
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin: 14px 0 18px; }
+    .input {
+      appearance: none; border: 1px solid var(--border); width: 100%;
+      padding: 14px 16px; font-size: 16px; color: var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: 14px; outline: none; transition: box-shadow .2s ease, border-color .2s ease, transform .06s ease;
+    }
+    .input::placeholder { color: #9aa3b2; }
+    .input:focus { border-color: rgba(124,58,237,.65); box-shadow: 0 0 0 6px rgba(124,58,237,.18), 0 0 0 10px rgba(34,211,238,.10); transform: translateY(-1px); }
+
+    .btn {
+      position: relative; display: inline-flex; align-items: center; gap: 10px;
+      border: none; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+      padding: 12px 16px; border-radius: 12px; font-weight: 700; letter-spacing: .3px; font-size: 15px; color: #0b0b10;
+      background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+      box-shadow: 0 10px 24px rgba(124,58,237,.35), 0 6px 12px rgba(34,211,238,.22);
+      transition: transform .08s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    .btn:hover { filter: saturate(1.1) brightness(1.05); box-shadow: 0 12px 28px rgba(124,58,237,.42), 0 8px 16px rgba(34,211,238,.28); }
+    .btn:active { transform: translateY(1px) scale(.99); }
+    .btn svg { width: 18px; height: 18px; }
+
+    .tasks { list-style: none; margin: 0; padding: 4px; display: grid; gap: 10px; }
+    .task {
+      --alpha: .10;
+      position: relative; padding: 14px 16px 14px 52px; border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,var(--alpha)), rgba(255,255,255,calc(var(--alpha) - .04)));
+      border: 1px solid var(--border);
+      backdrop-filter: blur(8px) saturate(140%);
+      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+      box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 12px 26px rgba(0,0,0,.22);
+      display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px;
+    }
+    .task:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(0,0,0,.34), var(--glow); border-color: rgba(124,58,237,.45); --alpha: .14; }
+    .task::before { 
+      content: ""; position: absolute; left: 16px; top: 50%; translate: 0 -50%; width: 20px; height: 20px; border-radius: 10px;
+      background: radial-gradient(circle at 30% 30%, #fff, #bda7ff 35%, #7c3aed 60%, #22d3ee 100%);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.25), 0 0 18px rgba(34,211,238,.45);
+      filter: saturate(1.3);
+    }
+    .task .text { font-size: 16px; line-height: 1.35; word-break: break-word; }
+    .chip { font-size: 12px; color: #111827; background: linear-gradient(135deg, #a78bfa, #67e8f9); padding: 6px 10px; border-radius: 999px; align-self: start; }
+
+    .empty { opacity: .75; color: var(--muted); text-align: center; padding: 18px 6px; font-size: 14px; }
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; translate: -50% 120%;
+      padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      backdrop-filter: blur(10px) saturate(140%);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      transition: translate .35s cubic-bezier(.2,.8,.16,1);
+      display: inline-flex; gap: 10px; align-items: center;
+    }
+    .toast.show { translate: -50% 0; }
+
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #0e1220; border: 1px solid #1f2940; padding: 2px 6px; border-radius: 6px; font-size: 12px; color: #cfe3ff; }
+    footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="grid"></div>
+
+  <main class="wrap" aria-labelledby="app-title">
+    <header>
+      <h1 id="app-title" class="title">Mi Lista de Tareas</h1>
+      <p class="subtitle">Ultra simple, ultra futurista. Solo <strong>añadir</strong> tareas. Nada más.</p>
+    </header>
+
+    <div class="row" role="group" aria-label="Añadir tarea">
+      <input id="taskInput" class="input" type="text" maxlength="160" autocomplete="off" placeholder="Añadir nueva tarea…" aria-label="Texto de la nueva tarea" />
+      <button id="addButton" class="btn" aria-label="Añadir tarea">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 4v16M4 12h16" stroke="#0b0b10" stroke-width="2.6" stroke-linecap="round"/></svg>
+        <span>Añadir</span>
+      </button>
+    </div>
+
+    <ul id="taskList" class="tasks" aria-live="polite" aria-relevant="additions"></ul>
+
+    <footer>
+      Tip: presiona <span class="kbd">Enter</span> para añadir rápidamente. Tus tareas se guardan localmente.
+    </footer>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 3l9 18H3L12 3z" stroke="#a7f3d0" stroke-width="1.6"/><path d="M12 9v6" stroke="#a7f3d0" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="#a7f3d0"/></svg>
+    <span id="toast-msg">Tarea añadida</span>
+  </div>
+
+  <script>
+    (function() {
+      const input = document.getElementById('taskInput');
+      const addBtn = document.getElementById('addButton');
+      const list = document.getElementById('taskList');
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const STORAGE_KEY = 'vaina-loca-tasks-v1';
+
+      const state = loadTasks();
+      renderAll(state);
+      ensureEmptyState();
+
+      addBtn.addEventListener('click', onAdd);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') onAdd();
+      });
+
+      function onAdd() {
+        const text = input.value.trim();
+        if (!text) {
+          pulse(input);
+          showToast('Escribe una tarea primero');
+          return;
+        }
+        const task = { id: cryptoRandom(), text, ts: Date.now() };
+        state.push(task);
+        persist();
+        appendTask(task);
+        input.value = '';
+        input.focus();
+        showToast('Tarea añadida');
+        ensureEmptyState();
+      }
+
+      function renderAll(items) {
+        list.innerHTML = '';
+        items.forEach(appendTask);
+      }
+
+      function qappendTask(task) {
+        const li = document.createElement('li');
+        li.className = 'task';
+        li.setAttribute('data-id', task.id);
+
+        const text = document.createElement('div');
+        text.className = 'text';
+        text.textContent = task.text;
+
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.textContent = prettyTime(task.ts);
+
+        li.appendChild(text);
+        li.appendChild(chip);
+        list.appendChild(li);
+
+        li.animate([
+          { opacity: 0, transform: 'translateY(8px) scale(.98)' },
+          { opacity: 1, transform: 'translateY(0) scale(1)' }
+        ], { duration: 220, easing: 'cubic-bezier(.2,.8,.16,1)' });
+      }
+
+      function ensureEmptyState() {
+        if (!state.length) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = 'Aún no hay tareas. Crea la primera.';
+          list.replaceChildren(empty);
+        }
+      }
+
+      function pulse(el) {
+        el.animate([
+          { boxShadow: '0 0 0 0 rgba(124,58,237,0.0)' },
+          { boxShadow: '0 0 0 12px rgba(124,58,237,0.18)' },
+          { boxShadow: '0 0 0 0 rgba(124,58,237,0.0)' }
+        ], { duration: 420, easing: 'ease-out' });
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        toastMsg.textContent = msg;
+        toast.hidden = false;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => (toast.hidden = true), 350);
+        }, 1500);
+      }
+
+      function prettyTime(ts) {
+        try {
+          const d = new Date(ts);
+          const pad = n => String(n).padStart(2,'0');
+          return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        } catch { return '—'; }
+      }
+
+      function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+      function loadTasks() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+        catch { return []; }
+      }
+
+      function cryptoRandom() {
+        if (window.crypto?.getRandomValues) {
+          const a = new Uint32Array(2);
+          crypto.getRandomValues(a);
+          return [...a].map(x => x.toString(36)).join('');
+        }
+        return Math.random().toString(36).slice(2) + Date.now().toString(36);
+      }
+
+      setTimeout(() => input.focus(), 300);
+    })();
+  </script>
+</body>
+</html>
